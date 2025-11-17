@@ -85,15 +85,65 @@ jobs:
           name: extension-package
           path: .
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Publish to Chrome Web Store
-        uses: Plow-Community/chrome-upload@v1
-        with:
-          file: sidekickai-chrome-extension/sidekickai-dist.zip
-          client-id: ${{ secrets.CHROME_CLIENT_ID }}
-          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
-          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
-          publish: true  # Set to false for draft, true to publish immediately
+        run: |
+          # Get access token using refresh token
+          TOKEN_RESPONSE=$(curl -s -X POST \
+            "https://oauth2.googleapis.com/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${{ secrets.CHROME_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.CHROME_CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.CHROME_REFRESH_TOKEN }}" \
+            -d "grant_type=refresh_token")
+          
+          ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.access_token')
+          
+          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "Failed to get access token"
+            echo "Response: $TOKEN_RESPONSE"
+            exit 1
+          fi
+          
+          # Upload extension package
+          UPLOAD_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@sidekickai-chrome-extension/sidekickai-dist.zip")
+          
+          HTTP_CODE=$(echo "$UPLOAD_RESPONSE" | tail -n1)
+          BODY=$(echo "$UPLOAD_RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully uploaded to Chrome Web Store"
+            echo "Response: $BODY"
+            
+            # Publish the extension (set publish=true to publish immediately)
+            PUBLISH_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}/publish?publishTarget=default" \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              -H "x-goog-api-version: 2")
+            
+            PUBLISH_HTTP_CODE=$(echo "$PUBLISH_RESPONSE" | tail -n1)
+            PUBLISH_BODY=$(echo "$PUBLISH_RESPONSE" | sed '$d')
+            
+            if [ "$PUBLISH_HTTP_CODE" -ge 200 ] && [ "$PUBLISH_HTTP_CODE" -lt 300 ]; then
+              echo "✅ Successfully published to Chrome Web Store"
+              echo "Response: $PUBLISH_BODY"
+            else
+              echo "⚠️ Publish returned status $PUBLISH_HTTP_CODE"
+              echo "Response: $PUBLISH_BODY"
+              # Continue anyway as Chrome may require manual review
+            fi
+          else
+            echo "❌ Upload failed with status $HTTP_CODE"
+            echo "Response: $BODY"
+            exit 1
+          fi
 
   publish-edge:
     name: Publish to Microsoft Edge Add-ons
