@@ -148,7 +148,7 @@ export default function App(){
           <h3 style={{margin:0, color: colors.text}}>SidekickAI</h3>
         </div>
         <div className='header-actions' style={{display:'flex', gap:'8px', alignItems:'center'}}>
-          <button 
+          {/* <button 
             onClick={() => {
               // Open ChatGPT web interface in new tab
               if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
@@ -176,7 +176,7 @@ export default function App(){
             }}
           >
             💬 ChatGPT
-          </button>
+          </button> */}
           <button 
             onClick={() => {
               try {
