@@ -1,4 +1,5 @@
 import React from 'react'
+import { ThemedButton } from '../components/Button'
 
 export default function Controls({ theme }) {
   const colors = theme?.colors || {}
@@ -74,122 +75,42 @@ export default function Controls({ theme }) {
         borderBottom: `1px solid ${colors.panelBorder || 'rgba(255,255,255,0.1)'}`
       }}
     >
-      <button 
+      <ThemedButton
+        theme={theme}
+        variant="default"
+        size="small"
         onClick={()=> window.parent.postMessage({type:'readLeft'}, '*')}
-        style={{
-          background: colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))',
-          border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-          color: colors.text || '#e6eef6',
-          padding: '6px 8px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          fontSize: '12px',
-          transition: 'all 0.2s',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = colors.buttonHover || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))'
-          e.target.style.transform = 'scale(1.02)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))'
-          e.target.style.transform = 'scale(1)'
-        }}
+        style={{ width: '100%' }}
       >
         Read Left
-      </button>
-      <button 
+      </ThemedButton>
+      <ThemedButton
+        theme={theme}
+        variant="default"
+        size="small"
         onClick={handleTakeScreenshot}
-        style={{
-          background: colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))',
-          border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-          color: colors.text || '#e6eef6',
-          padding: '6px 8px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          fontSize: '12px',
-          transition: 'all 0.2s',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = colors.buttonHover || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))'
-          e.target.style.transform = 'scale(1.02)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))'
-          e.target.style.transform = 'scale(1)'
-        }}
+        style={{ width: '100%' }}
       >
         📷 Take Screenshot
-      </button>
-      <button 
+      </ThemedButton>
+      <ThemedButton
+        theme={theme}
+        variant="default"
+        size="small"
         onClick={handleAnswerScreenshot}
-        style={{
-          background: colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))',
-          border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-          color: colors.text || '#e6eef6',
-          padding: '6px 8px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          fontSize: '12px',
-          transition: 'all 0.2s',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = colors.buttonHover || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))'
-          e.target.style.transform = 'scale(1.02)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))'
-          e.target.style.transform = 'scale(1)'
-        }}
+        style={{ width: '100%' }}
       >
         🔍 Describe
-      </button>
-      <button 
+      </ThemedButton>
+      <ThemedButton
+        theme={theme}
+        variant="default"
+        size="small"
         onClick={()=> window.parent.postMessage({type:'findQuiz'}, '*')}
-        style={{
-          background: colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))',
-          border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-          color: colors.text || '#e6eef6',
-          padding: '6px 8px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontWeight: '600',
-          fontSize: '12px',
-          transition: 'all 0.2s',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = colors.buttonHover || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))'
-          e.target.style.transform = 'scale(1.02)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.2), rgba(96,165,250,0.2))'
-          e.target.style.transform = 'scale(1)'
-        }}
+        style={{ width: '100%' }}
       >
         Answer Quiz
-      </button>
+      </ThemedButton>
     </div>
   )
 }

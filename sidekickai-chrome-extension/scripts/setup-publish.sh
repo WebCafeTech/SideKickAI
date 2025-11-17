@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Setup script for publishing credentials
+# This helps you gather the necessary credentials for GitHub Actions
+
+echo "🚀 SidekickAI Publishing Setup"
+echo "================================"
+echo ""
+
+echo "📋 Chrome Web Store Setup"
+echo "------------------------"
+echo "1. Go to: https://console.cloud.google.com/"
+echo "2. Create/select a project"
+echo "3. Enable 'Chrome Web Store API'"
+echo "4. Create OAuth 2.0 credentials"
+echo "5. Get refresh token using:"
+echo "   - https://github.com/fregante/chrome-webstore-upload-cli"
+echo "   - Or: https://github.com/DrewML/chrome-webstore-token"
+echo ""
+echo "Required secrets for GitHub:"
+echo "  - CHROME_CLIENT_ID"
+echo "  - CHROME_CLIENT_SECRET"
+echo "  - CHROME_REFRESH_TOKEN"
+echo "  - CHROME_EXTENSION_ID (get after first manual publish)"
+echo ""
+
+echo "📋 Microsoft Edge Add-ons Setup"
+echo "-------------------------------"
+echo "1. Go to: https://partner.microsoft.com/dashboard"
+echo "2. Navigate to your extension"
+echo "3. Go to 'API Access' section"
+echo "4. Create Azure AD app registration"
+echo "5. Get Client ID, Secret, and Tenant ID"
+echo ""
+echo "Required secrets for GitHub:"
+echo "  - EDGE_CLIENT_ID"
+echo "  - EDGE_CLIENT_SECRET"
+echo "  - EDGE_PRODUCT_ID (get after first manual publish)"
+echo "  - EDGE_TENANT_ID"
+echo ""
+
+echo "✅ After gathering credentials:"
+echo "1. Go to your GitHub repo"
+echo "2. Settings → Secrets and variables → Actions"
+echo "3. Add all the secrets listed above"
+echo "4. Create a version tag to trigger publishing:"
+echo "   git tag v1.0.0"
+echo "   git push origin v1.0.0"
+echo ""
+

@@ -1,0 +1,197 @@
+name: Build and Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0, v1.0.1, etc.
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+      publish_chrome:
+        description: 'Publish to Chrome Web Store'
+        required: false
+        type: boolean
+        default: true
+      publish_edge:
+        description: 'Publish to Edge Add-ons'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: sidekickai-chrome-extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: sidekickai-chrome-extension
+        run: npm ci
+
+      - name: Update version in manifest
+        working-directory: sidekickai-chrome-extension
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          # Update manifest.json version
+          node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            manifest.version = '$VERSION';
+            fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));
+          "
+          echo "Updated version to: $VERSION"
+
+      - name: Build extension
+        working-directory: sidekickai-chrome-extension
+        run: npm run build
+
+      - name: Create ZIP package
+        working-directory: sidekickai-chrome-extension
+        run: npm run zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          path: sidekickai-chrome-extension/sidekickai-dist.zip
+          retention-days: 30
+
+  publish-chrome:
+    name: Publish to Chrome Web Store
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish_chrome != 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-package
+          path: .
+
+      - name: Publish to Chrome Web Store
+        uses: Plow-Community/chrome-upload@v1
+        with:
+          file: sidekickai-chrome-extension/sidekickai-dist.zip
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          publish: true  # Set to false for draft, true to publish immediately
+
+  publish-edge:
+    name: Publish to Microsoft Edge Add-ons
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish_edge != 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-package
+          path: .
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Publish to Edge Add-ons
+        run: |
+          # Get access token
+          TOKEN_RESPONSE=$(curl -s -X POST \
+            "https://login.microsoftonline.com/${{ secrets.EDGE_TENANT_ID }}/oauth2/v2.0/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${{ secrets.EDGE_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.EDGE_CLIENT_SECRET }}" \
+            -d "scope=https://api.addons.microsoftedge.microsoft.com/.default" \
+            -d "grant_type=client_credentials")
+          
+          ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.access_token')
+          
+          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "Failed to get access token"
+            echo "Response: $TOKEN_RESPONSE"
+            exit 1
+          fi
+          
+          # Upload extension
+          UPLOAD_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@sidekickai-chrome-extension/sidekickai-dist.zip")
+          
+          HTTP_CODE=$(echo "$UPLOAD_RESPONSE" | tail -n1)
+          BODY=$(echo "$UPLOAD_RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully uploaded to Edge Add-ons"
+            echo "Response: $BODY"
+          else
+            echo "⚠️ Upload returned status $HTTP_CODE"
+            echo "Response: $BODY"
+            # Continue anyway as Edge may require manual approval
+          fi
+        continue-on-error: true
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build, publish-chrome, publish-edge]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: SidekickAI v${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 SidekickAI v${{ steps.version.outputs.version }}
+            
+            ### Changes
+            - Automated release via GitHub Actions
+            
+            ### Downloads
+            - [Chrome Web Store](https://chrome.google.com/webstore/detail/${{ secrets.CHROME_EXTENSION_ID }})
+            - [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/${{ secrets.EDGE_PRODUCT_ID }})
+            
+            ### Installation
+            1. Visit the Chrome Web Store or Edge Add-ons store
+            2. Click "Add to Chrome" or "Get"
+            3. Start using SidekickAI!
+          files: |
+            sidekickai-chrome-extension/sidekickai-dist.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

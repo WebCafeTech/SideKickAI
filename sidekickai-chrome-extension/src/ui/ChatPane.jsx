@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { formatMessage } from '../utils/formatMessage.jsx'
+import MessageBubble from '../components/MessageBubble'
+import { SendButton } from '../components/IconButton'
 export default function ChatPane({settings, theme}) {
   const colors = theme?.colors || {}
   const [messages, setMessages] = useState([
@@ -11,44 +12,6 @@ export default function ChatPane({settings, theme}) {
   const chatRef = useRef()
   const lastRequestTime = useRef(0)
   const messagesEndRef = useRef(null)
-  
-  // Loading animation component
-  const LoadingAnimation = () => (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-      padding: '8px 0'
-    }}>
-      <div style={{
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        background: colors.text || '#e6eef6',
-        opacity: 0.4,
-        animation: 'typing 1.4s infinite ease-in-out',
-        animationDelay: '0s'
-      }}></div>
-      <div style={{
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        background: colors.text || '#e6eef6',
-        opacity: 0.4,
-        animation: 'typing 1.4s infinite ease-in-out',
-        animationDelay: '0.2s'
-      }}></div>
-      <div style={{
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        background: colors.text || '#e6eef6',
-        opacity: 0.4,
-        animation: 'typing 1.4s infinite ease-in-out',
-        animationDelay: '0.4s'
-      }}></div>
-    </div>
-  )
   
   // Add typing animation styles
   useEffect(() => {
@@ -271,16 +234,37 @@ export default function ChatPane({settings, theme}) {
     setIsLoading(true);
     lastRequestTime.current = now;
     
-    // Show user message with screenshot if available
+    // Show loading message with animation first
+    const loadingId = Date.now();
+    addMessage({role:'assistant', text: '', id: loadingId, isLoading: true})
+    
+    // Build conversation history BEFORE adding user message (to avoid async state issues)
+    // Include all previous messages + current prompt
+    const conversationHistory = [
+      ...messages
+        .filter(m => 
+          (m.role === 'user' || m.role === 'assistant') && 
+          !m.isLoading && 
+          m.text && 
+          m.text.trim() !== ''
+        )
+        .map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.text
+        })),
+      // Add current user message
+      {
+        role: 'user',
+        content: prompt
+      }
+    ];
+    
+    // Show user message with screenshot if available (after building history)
     if (imageData) {
       addMessage({role:'user', text: prompt, image: imageData})
     } else {
     addMessage({role:'user', text: prompt})
     }
-    
-    // Show loading message with animation
-    const loadingId = Date.now();
-    addMessage({role:'assistant', text: '', id: loadingId, isLoading: true})
     
     return new Promise((resolve) => {
       // Get current settings from storage to ensure we have the latest
@@ -299,13 +283,18 @@ export default function ChatPane({settings, theme}) {
         const modelToUse = currentSettings.model || defaultModels[providerToUse] || 'gpt-4o';
         
         console.log('[SidekickAI] Using provider:', providerToUse, 'model:', modelToUse);
+        console.log('[SidekickAI] Conversation history length:', conversationHistory.length);
         
+        // Send API call with conversation history
         chrome.runtime.sendMessage({
           type:'callAPI', 
           payload: {
             provider: providerToUse, 
             model: modelToUse, 
-            input: {prompt},
+            input: {
+              prompt: prompt,
+              messages: conversationHistory
+            },
             imageData: imageData
           }
         }, (res) => {
@@ -392,124 +381,13 @@ export default function ChatPane({settings, theme}) {
         }}
       >
         {messages.map((m,i)=> (
-          <div 
-            key={m.id || i} 
-            className={'msg '+ (m.role||'assistant') + ' message-enter'}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '12px',
-              maxWidth: '85%',
-              boxShadow: colors.panelShadow || '0 2px 10px rgba(2,6,23,0.4)',
-              transition: 'all 0.2s ease',
-              backdropFilter: colors.backdrop || 'blur(10px)',
-              WebkitBackdropFilter: colors.backdrop || 'blur(10px)',
-              position: 'relative',
-              ...(m.role === 'user' ? {
-                alignSelf: 'flex-end',
-                background: colors.messageUser || 'linear-gradient(135deg, rgba(45,212,191,0.15), rgba(96,165,250,0.1))',
-                border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.2)'}`
-              } : {
-                alignSelf: 'flex-start',
-                background: colors.messageAssistant || 'rgba(255,255,255,0.03)',
-                border: `1px solid ${colors.panelBorder || 'rgba(255,255,255,0.04)'}`
-              })
-            }}
-          >
-            {/* Resend button for user messages */}
-            {m.role === 'user' && !m.isLoading && (
-              <button
-                onClick={() => handleResend(i)}
-                title="Resend message"
-                style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '4px',
-                  background: 'rgba(0,0,0,0.3)',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: colors.text || '#e6eef6',
-                  cursor: 'pointer',
-                  padding: '4px 6px',
-                  fontSize: '10px',
-                  opacity: 0.6,
-                  transition: 'opacity 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.opacity = '1'
-                  e.target.style.background = 'rgba(0,0,0,0.5)'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.opacity = '0.6'
-                  e.target.style.background = 'rgba(0,0,0,0.3)'
-                }}
-              >
-                ↻ Resend
-              </button>
-            )}
-            {m.image && (
-              <div style={{
-                marginBottom: '8px',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                border: '1px solid rgba(255,255,255,0.1)',
-                maxWidth: '100%'
-              }}>
-                <img 
-                  src={`data:image/png;base64,${m.image}`}
-                  alt="Screenshot"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: '300px',
-                    objectFit: 'contain',
-                    display: 'block',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    // Open full size in new window
-                    const newWindow = window.open();
-                    if (newWindow) {
-                      newWindow.document.write(`
-                        <html>
-                          <head><title>Screenshot</title></head>
-                          <body style="margin:0; padding:20px; background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh;">
-                            <img src="data:image/png;base64,${m.image}" style="max-width:100%; max-height:100vh; border:1px solid #333;" />
-                          </body>
-                        </html>
-                      `);
-                    }
-                  }}
-                  title="Click to view full size"
-                />
-                <div style={{
-                  padding: '4px 8px',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.6)',
-                  background: 'rgba(0,0,0,0.3)',
-                  textAlign: 'center'
-                }}>
-                  📷 Screenshot • Click to view full size
-                </div>
-              </div>
-            )}
-            {m.isLoading ? (
-              <LoadingAnimation />
-            ) : (
-              <div style={{
-                whiteSpace: 'pre-wrap',
-                margin: 0,
-                wordBreak: 'break-word',
-                lineHeight: '1.6',
-                color: colors.text || '#e6eef6',
-                paddingRight: m.role === 'user' ? '50px' : '0'
-              }}>
-                {formatMessage(m.text)}
-              </div>
-            )}
-          </div>
+          <MessageBubble
+            key={m.id || i}
+            message={m}
+            theme={theme}
+            onResend={handleResend}
+            messageIndex={i}
+          />
         ))}
         <div ref={messagesEndRef} style={{height: '1px'}} />
       </div>
@@ -610,39 +488,12 @@ export default function ChatPane({settings, theme}) {
               fontFamily: 'inherit'
             }}
           ></textarea>
-          <button 
-            onClick={onSend} 
-            disabled={isLoading || (!input.trim() && !pendingScreenshot)}
-            style={{
-              width: '96px',
-              borderRadius: '10px',
-              border: `1px solid ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-              cursor: isLoading || (!input.trim() && !pendingScreenshot) ? 'not-allowed' : 'pointer',
-              background: isLoading || (!input.trim() && !pendingScreenshot)
-                ? colors.panel || 'rgba(255,255,255,0.05)'
-                : colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))',
-              color: colors.text || '#e6eef6',
-              fontWeight: '700',
-              fontSize: '14px',
-              transition: 'all 0.2s',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              opacity: isLoading || (!input.trim() && !pendingScreenshot) ? 0.5 : 1,
-              height: '56px'
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoading && (input.trim() || pendingScreenshot)) {
-                e.target.style.background = colors.buttonHover || 'linear-gradient(90deg, rgba(45,212,191,0.4), rgba(96,165,250,0.4))'
-                e.target.style.transform = 'scale(1.02)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = colors.button || 'linear-gradient(90deg, rgba(45,212,191,0.3), rgba(96,165,250,0.3))'
-              e.target.style.transform = 'scale(1)'
-            }}
-          >
-            {isLoading ? '⏳' : 'Send'}
-          </button>
+          <SendButton
+            theme={theme}
+            onClick={onSend}
+            disabled={!input.trim() && !pendingScreenshot}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import ChatPane from './ChatPane'
 import Controls from './Controls'
 import { getTheme, DEFAULT_THEME } from '../utils/themes'
+import { ThemedButton } from '../components/Button'
+import { SettingsIcon, PinIcon, CloseIcon } from '../components/Icons'
 
 export default function App(){
   const [settings, setSettings] = useState({provider:'openai', model:'gpt-4o'})
@@ -177,7 +179,10 @@ export default function App(){
           >
             💬 ChatGPT
           </button> */}
-          <button 
+          <ThemedButton
+            theme={currentTheme}
+            variant="icon"
+            size="small"
             onClick={() => {
               try {
                 chrome.runtime.openOptionsPage()
@@ -188,40 +193,39 @@ export default function App(){
             }}
             title="Open Settings"
             style={{
-              background: colors.panel,
-              border: `1px solid ${colors.panelBorder}`,
-              color: colors.text,
-              padding: '4px 8px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              borderRadius: '6px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = colors.buttonHover
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = colors.panel
+              width: '32px',
+              height: '32px',
+              padding: '0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            ⚙️ Settings
-          </button>
-          <button 
+            <SettingsIcon size={16} color={colors.text || '#e6eef6'} />
+          </ThemedButton>
+          <ThemedButton
+            theme={currentTheme}
+            variant="icon"
+            size="small"
             onClick={handleTogglePin}
             title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
             style={{
+              width: '32px',
+              height: '32px',
+              padding: '0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               background: isPinned ? colors.accent : colors.panel,
-              border: `1px solid ${isPinned ? colors.accentBorder : colors.panelBorder}`,
-              color: colors.text,
-              padding: '4px 8px',
-              fontSize: '12px',
-              borderRadius: '6px',
-              transition: 'all 0.2s'
+              border: `1px solid ${isPinned ? colors.accentBorder : colors.panelBorder}`
             }}
           >
-            {isPinned ? '📌 Pinned' : '📌 Pin'}
-          </button>
-          <button 
+            <PinIcon size={16} color={colors.text || '#e6eef6'} filled={isPinned} />
+          </ThemedButton>
+          <ThemedButton
+            theme={currentTheme}
+            variant="icon"
+            size="small"
             onClick={()=> {
               try {
                 window.parent.postMessage({type:'removeSidebar'}, '*')
@@ -229,18 +233,18 @@ export default function App(){
                 console.error('[SidekickAI] Error closing sidebar:', err)
               }
             }}
+            title="Close sidebar"
             style={{
-              background: colors.panel,
-              border: `1px solid ${colors.panelBorder}`,
-              color: colors.text,
-              padding: '4px 8px',
-              fontSize: '12px',
-              borderRadius: '6px',
-              cursor: 'pointer'
+              width: '32px',
+              height: '32px',
+              padding: '0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            Close
-          </button>
+            <CloseIcon size={16} color={colors.text || '#e6eef6'} />
+          </ThemedButton>
         </div>
       </div>
       <Controls theme={currentTheme} />

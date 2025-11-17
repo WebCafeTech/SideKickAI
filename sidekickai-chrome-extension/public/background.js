@@ -337,6 +337,11 @@ async function callProviderAPI({provider, model, input, imageData}) {
     const modelToUse = model || DEFAULT_MODELS.openai;
     
     try {
+      // Use conversation history if available, otherwise use single message
+      const messages = input.messages || [{role:'user', content: input.prompt}];
+      
+      console.log('[SidekickAI] OpenAI - Sending', messages.length, 'messages in conversation');
+      
       const { res, data } = await fetchWithRetry('https://api.openai.com/v1/chat/completions', {
         method:'POST', 
         headers:{
@@ -345,12 +350,12 @@ async function callProviderAPI({provider, model, input, imageData}) {
         },
         body: JSON.stringify({ 
           model: modelToUse, 
-          messages: input.messages || [{role:'user', content: input.prompt}] 
+          messages: messages
         })
       });
       
-      const text = data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? JSON.stringify(data);
-      return {text, raw: data};
+    const text = data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? JSON.stringify(data);
+    return {text, raw: data};
     } catch (error) {
       throw error; // Re-throw with better error message
     }
@@ -359,9 +364,30 @@ async function callProviderAPI({provider, model, input, imageData}) {
     const key = activeSettings.keys?.huggingface || settings.keys?.huggingface;
     if (!key) throw new Error('HF key not set');
     const modelToUse = model || DEFAULT_MODELS.huggingface;
+    
+    // Hugging Face models typically don't support conversation history well
+    // So we'll build a context string from the conversation history
+    let promptText = '';
+    if (input.messages && input.messages.length > 1) {
+      // Build context from conversation history
+      const contextParts = input.messages.map(msg => {
+        const role = msg.role === 'user' ? 'User' : 'Assistant';
+        return `${role}: ${msg.content}`;
+      });
+      promptText = contextParts.join('\n\n');
+    } else {
+      promptText = input.prompt || input.messages?.slice(-1)?.[0]?.content || '';
+    }
+    
+    console.log('[SidekickAI] Hugging Face - Sending conversation context');
+    
     const res = await fetch(`https://api-inference.huggingface.co/models/${modelToUse}`, {
-      method:'POST', headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
-      body: JSON.stringify({ inputs: input.prompt || input.messages?.slice(-1)?.[0]?.content })
+      method:'POST', 
+      headers:{
+        'Authorization':`Bearer ${key}`,
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({ inputs: promptText })
     });
     if (!res.ok) throw new Error('HF error '+res.status);
     const data = await res.json();
@@ -381,27 +407,70 @@ async function callProviderAPI({provider, model, input, imageData}) {
       modelToUse = modelToUse.replace('models/', '');
     }
     
-    const promptText = input.prompt || input.messages?.slice(-1)?.[0]?.content;
+    // Build conversation history for Gemini
+    // Gemini uses a different format: array of contents, each with role and parts
+    let contents = [];
     
-    // Build parts array - include image if provided
-    const parts = [{ text: promptText }];
-    
-    // Add image if provided (for vision models)
-    if (imageData) {
-      parts.push({
-        inline_data: {
-          mime_type: 'image/png',
-          data: imageData
+    if (input.messages && input.messages.length > 0) {
+      // Convert messages to Gemini format
+      // Gemini uses 'user' and 'model' roles (not 'assistant')
+      for (let i = 0; i < input.messages.length; i++) {
+        const msg = input.messages[i];
+        const role = msg.role === 'assistant' ? 'model' : 'user';
+        
+        // Build parts array for this message
+        const parts = [];
+        
+        // Add text content
+        if (msg.content) {
+          parts.push({ text: msg.content });
         }
+        
+        // Add image if this is the last user message and imageData is provided
+        if (i === input.messages.length - 1 && msg.role === 'user' && imageData) {
+          parts.push({
+            inline_data: {
+              mime_type: 'image/png',
+              data: imageData
+            }
+          });
+          console.log('[SidekickAI] Including image in Gemini request');
+        }
+        
+        if (parts.length > 0) {
+          contents.push({
+            role: role,
+            parts: parts
+          });
+        }
+      }
+    } else {
+      // Fallback to single message
+      const promptText = input.prompt || '';
+      const parts = [{ text: promptText }];
+      
+      // Add image if provided
+      if (imageData) {
+        parts.push({
+          inline_data: {
+            mime_type: 'image/png',
+            data: imageData
+          }
+        });
+        console.log('[SidekickAI] Including image in Gemini request');
+      }
+      
+      contents.push({
+        role: 'user',
+        parts: parts
       });
-      console.log('[SidekickAI] Including image in Gemini request');
     }
+    
+    console.log('[SidekickAI] Gemini - Sending', contents.length, 'messages in conversation');
     
     // Request body format per official docs: https://ai.google.dev/api/generate-content
     const requestBody = {
-      contents: [{
-        parts: parts
-      }]
+      contents: contents
     };
     
     // Try v1 (stable) first, then fallback to v1beta if needed
