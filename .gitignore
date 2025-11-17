@@ -1,2 +1,6 @@
 /.DS_Store
 /.env
+/node_modules
+/sidekickai-chrome-extension/dist
+/sidekickai-chrome-extension/node_modules
+/sidekickai-chrome-extension/.env
