@@ -18,7 +18,7 @@ try {
   console.error('[SidekickAI] Failed to render React app:', error)
   document.body.innerHTML = `
     <div style="padding:20px;color:#fff;font-family:system-ui">
-      <h3>SidekickAI Loading Error</h3>
+      <h3>MysticKode SidePanel AI Loading Error</h3>
       <p>${error.message}</p>
       <button onclick="window.location.reload()" style="padding:8px 16px;margin-top:10px;cursor:pointer">Reload</button>
     </div>

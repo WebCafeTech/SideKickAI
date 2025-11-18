@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build && node ./scripts/generate-manifest-dist.js",
     "preview": "vite preview",
-    "zip": "node ./scripts/zip-dist.js"
+    "zip": "node ./scripts/zip-dist.js",
+    "generate-icons": "node ./scripts/generate-icons.js"
   },
   "dependencies": {
     "react": "18.2.0",
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "archiver": "^7.0.1",
+    "sharp": "^0.33.0",
     "vite": "5.0.0"
   }
 }

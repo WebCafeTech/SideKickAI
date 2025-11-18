@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import MessageBubble from '../components/MessageBubble'
 import { SendButton } from '../components/IconButton'
 export default function ChatPane({settings, theme}) {
   const colors = theme?.colors || {}
   const [messages, setMessages] = useState([
-    {role: 'assistant', text: '👋 Welcome to SidekickAI! I can help you with:\n\n• Reading content from the left side of the page\n• Answering quiz questions (MCQ)\n• General questions and assistance\n\n💡 **Tip:** Don\'t have an API key? Click the "💬 ChatGPT" button in the header to use ChatGPT\'s web interface instead!\n\nTry clicking "Read Left" or "Answer Quiz" buttons, or ask me anything!'}
+    {role: 'assistant', text: '👋 Welcome to MysticKode SidePanel AI!\n\n**Transform your browsing into action.**\n\nI can help you with:\n• Reading content from the left side of the page\n• Analyzing screenshots\n• General questions and assistance\n\n💡 **Tip:** Don\'t have an API key? Click the "💬 ChatGPT" button in the header to use ChatGPT\'s web interface instead!\n\nTry clicking "Read Left" or "📷 Take Screenshot" buttons, or ask me anything!'}
   ])
   const [input, setInput] = useState('')
   const [pendingScreenshot, setPendingScreenshot] = useState(null)
@@ -13,46 +13,7 @@ export default function ChatPane({settings, theme}) {
   const lastRequestTime = useRef(0)
   const messagesEndRef = useRef(null)
   
-  // Add typing animation styles
-  useEffect(() => {
-    const styleId = 'typing-animation-style'
-    let styleEl = document.getElementById(styleId)
-    if (!styleEl) {
-      styleEl = document.createElement('style')
-      styleEl.id = styleId
-      document.head.appendChild(styleEl)
-    }
-    styleEl.textContent = `
-      @keyframes typing {
-        0%, 60%, 100% {
-          transform: translateY(0);
-          opacity: 0.4;
-        }
-        30% {
-          transform: translateY(-10px);
-          opacity: 1;
-        }
-      }
-      @keyframes messageSlideIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .message-enter {
-        animation: messageSlideIn 0.3s ease-out;
-      }
-    `
-    return () => {
-      if (styleEl && styleEl.parentNode) {
-        styleEl.parentNode.removeChild(styleEl)
-      }
-    }
-  }, [])
+  // Note: Animations moved to styles.css for better performance
   
   // Apply custom scrollbar styles based on theme
   useEffect(() => {
@@ -77,26 +38,17 @@ export default function ChatPane({settings, theme}) {
     }
   }, [colors])
   
-  // Auto-scroll to bottom when messages change
+  // Optimized auto-scroll - only scroll when new messages are added
   useEffect(() => {
-    // Use multiple methods to ensure scrolling works
-    if (chatRef.current) {
-      // Method 1: Direct scroll
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
-      
-      // Method 2: Scroll to element if ref exists
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }
-      
-      // Method 3: Use requestAnimationFrame for reliable scrolling
+    if (chatRef.current && messages.length > 0) {
+      // Use requestAnimationFrame for smooth, performant scrolling
       requestAnimationFrame(() => {
         if (chatRef.current) {
           chatRef.current.scrollTop = chatRef.current.scrollHeight
         }
       })
     }
-  }, [messages])
+  }, [messages.length]) // Only depend on message count, not the entire messages array
   useEffect(()=> {
     const handler = (ev) => {
       const m = ev.data
@@ -461,7 +413,7 @@ export default function ChatPane({settings, theme}) {
         )}
         
         {/* Input and Send Button Row */}
-        <div style={{display: 'flex', gap: '8px', alignItems: 'flex-end'}}>
+        <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
           <textarea 
             value={input} 
             onChange={(e)=> setInput(e.target.value)} 

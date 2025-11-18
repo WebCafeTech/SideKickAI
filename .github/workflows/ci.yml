@@ -1,0 +1,53 @@
+name: CI - Build and Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - 'feature/**'
+      - 'fix/**'
+      - 'hotfix/**'
+
+jobs:
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: sidekickai-chrome-extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: sidekickai-chrome-extension
+        run: npm ci
+
+      - name: Build extension
+        working-directory: sidekickai-chrome-extension
+        run: npm run build
+
+      - name: Create ZIP package
+        working-directory: sidekickai-chrome-extension
+        run: npm run zip
+
+      - name: Verify ZIP package
+        run: |
+          if [ ! -f sidekickai-chrome-extension/sidekickai-dist.zip ]; then
+            echo "❌ ZIP package not created"
+            exit 1
+          fi
+          echo "✅ ZIP package created successfully"
+          ls -lh sidekickai-chrome-extension/sidekickai-dist.zip
+

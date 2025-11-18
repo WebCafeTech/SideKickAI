@@ -136,56 +136,184 @@ export default function OptionsApp(){
   
   return (
     <div style={{padding:12, fontFamily:'sans-serif', maxWidth: '600px'}}>
-      <h2>SidekickAI — Options</h2>
+      <h2>MysticKode SidePanel AI — Options</h2>
       <p style={{color: '#666', fontSize: '14px', marginBottom: '20px'}}>
         Configure your API keys and select the AI model to use for all chat operations.
       </p>
       
-      {/* ChatGPT Web Interface Option */}
+
+      {/* Gemini Setup Instructions */}
       <div style={{
         marginBottom: '24px',
-        padding: '16px',
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1))',
-        border: '2px solid rgba(16, 185, 129, 0.3)',
-        borderRadius: '8px'
+        padding: '20px',
+        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(234, 179, 8, 0.1))',
+        border: '2px solid rgba(251, 191, 36, 0.4)',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(251, 191, 36, 0.1)'
       }}>
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px'}}>
-          <h3 style={{margin: 0, fontSize: '16px', color: '#111'}}>💬 Use ChatGPT Web Interface</h3>
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px'}}>
+          <h3 style={{margin: 0, fontSize: '18px', color: '#111', fontWeight: 'bold'}}>✨ Gemini AI Setup Guide</h3>
+          <span style={{
+            padding: '4px 10px',
+            background: 'rgba(34, 197, 94, 0.2)',
+            color: '#16a34a',
+            borderRadius: '12px',
+            fontSize: '11px',
+            fontWeight: 'bold'
+          }}>
+            ✓ WORKING
+          </span>
+        </div>
+        
+        <div style={{
+          padding: '12px',
+          background: 'rgba(34, 197, 94, 0.1)',
+          borderRadius: '6px',
+          marginBottom: '16px',
+          border: '1px solid rgba(34, 197, 94, 0.3)'
+        }}>
+          <p style={{margin: 0, fontSize: '14px', color: '#166534', lineHeight: '1.6', fontWeight: '500'}}>
+            🎉 <strong>Gemini models are currently working properly!</strong> Follow the steps below to get your API key and start using Gemini AI.
+          </p>
+        </div>
+
+        <div style={{marginBottom: '16px'}}>
+          <h4 style={{margin: '0 0 12px 0', fontSize: '15px', color: '#111', fontWeight: '600'}}>📋 Step-by-Step Instructions:</h4>
+          <ol style={{margin: 0, paddingLeft: '20px', color: '#333', lineHeight: '1.8', fontSize: '14px'}}>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Visit Google AI Studio:</strong>
+              <br />
+              <a 
+                href="https://aistudio.google.com/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+                    chrome.tabs.create({ url: 'https://aistudio.google.com/apikey' })
+                  } else {
+                    window.open('https://aistudio.google.com/apikey', '_blank', 'noopener,noreferrer')
+                  }
+                }}
+                style={{
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                https://aistudio.google.com/apikey
+              </a>
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Sign in with your Google account</strong> (if not already signed in)
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Click "Create API Key"</strong> button
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Select or create a Google Cloud project</strong> (you can use the default project)
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Copy your API key</strong> - It will start with "AIza..." and look like: <code style={{
+                background: 'rgba(0,0,0,0.05)',
+                padding: '2px 6px',
+                borderRadius: '3px',
+                fontSize: '12px',
+                fontFamily: 'monospace'
+              }}>AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz</code>
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Paste the API key</strong> in the "Gemini Key" field below
+            </li>
+            <li style={{marginBottom: '10px'}}>
+              <strong>Select "Gemini" as your AI Provider</strong> from the dropdown
+            </li>
+            <li>
+              <strong>Click "Save Settings"</strong> and you're ready to use Gemini AI!
+            </li>
+          </ol>
+        </div>
+
+        <div style={{
+          padding: '12px',
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '6px',
+          border: '1px solid rgba(59, 130, 246, 0.3)'
+        }}>
+          <p style={{margin: '0 0 8px 0', fontSize: '13px', color: '#1e40af', fontWeight: '600'}}>
+            💡 <strong>Pro Tips:</strong>
+          </p>
+          <ul style={{margin: 0, paddingLeft: '20px', color: '#1e40af', lineHeight: '1.6', fontSize: '13px'}}>
+            <li>Gemini API is <strong>free to use</strong> with generous rate limits</li>
+            <li>Your API key is stored locally in your browser - it never leaves your device</li>
+            <li>You can create multiple API keys for different projects</li>
+            <li>Gemini models support both text and image analysis</li>
+          </ul>
+        </div>
+
+        <div style={{marginTop: '16px', display: 'flex', gap: '8px'}}>
           <button
             onClick={() => {
               if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-                chrome.tabs.create({ url: 'https://chat.openai.com' })
+                chrome.tabs.create({ url: 'https://aistudio.google.com/apikey' })
               } else {
-                window.open('https://chat.openai.com', '_blank', 'noopener,noreferrer')
+                window.open('https://aistudio.google.com/apikey', '_blank', 'noopener,noreferrer')
               }
             }}
             style={{
-              padding: '6px 12px',
-              background: 'linear-gradient(135deg, #10b981, #3b82f6)',
-              color: 'white',
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+              color: '#111',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: '600',
               fontSize: '13px',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              flex: 1
             }}
             onMouseEnter={(e) => {
-              e.target.style.transform = 'scale(1.05)'
-              e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)'
+              e.target.style.transform = 'scale(1.02)'
+              e.target.style.boxShadow = '0 4px 12px rgba(251, 191, 36, 0.4)'
             }}
             onMouseLeave={(e) => {
               e.target.style.transform = 'scale(1)'
               e.target.style.boxShadow = 'none'
             }}
           >
-            Open ChatGPT
+            🔑 Get Gemini API Key
+          </button>
+          <button
+            onClick={() => {
+              if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+                chrome.tabs.create({ url: 'https://ai.google.dev/docs' })
+              } else {
+                window.open('https://ai.google.dev/docs', '_blank', 'noopener,noreferrer')
+              }
+            }}
+            style={{
+              padding: '8px 16px',
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: '#2563eb',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '13px',
+              transition: 'all 0.2s',
+              flex: 1
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(59, 130, 246, 0.2)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(59, 130, 246, 0.1)'
+            }}
+          >
+            📚 View Docs
           </button>
         </div>
-        <p style={{margin: 0, fontSize: '13px', color: '#555', lineHeight: '1.5'}}>
-          <strong>No API key needed!</strong> Click the button above or use the "💬 ChatGPT" button in the sidebar header to open ChatGPT's web interface. 
-          This allows you to use ChatGPT directly without setting up an API key. Perfect for users who prefer the official web interface.
-        </p>
       </div>
       
       <div style={{marginBottom: '16px'}}>
@@ -211,14 +339,55 @@ export default function OptionsApp(){
       </div>
       
       <div style={{marginBottom: '16px'}}>
-        <label style={{display: 'block', marginBottom: '4px', fontWeight: 'bold'}}>Gemini Key</label>
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px'}}>
+          <label style={{fontWeight: 'bold', color: '#111'}}>Gemini Key</label>
+          {gemini && (
+            <span style={{
+              padding: '2px 8px',
+              background: 'rgba(34, 197, 94, 0.2)',
+              color: '#16a34a',
+              borderRadius: '10px',
+              fontSize: '10px',
+              fontWeight: 'bold'
+            }}>
+              ✓ Configured
+            </span>
+          )}
+        </div>
         <input 
           value={gemini} 
           onChange={e=>setGemini(e.target.value)} 
           type="password"
-          style={{width:'100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px'}} 
-          placeholder="AIza..."
+          style={{
+            width:'100%', 
+            padding: '10px', 
+            border: provider === 'gemini' ? '2px solid rgba(251, 191, 36, 0.5)' : '1px solid #ddd', 
+            borderRadius: '6px',
+            background: provider === 'gemini' ? 'rgba(251, 191, 36, 0.05)' : '#fff',
+            transition: 'all 0.2s'
+          }} 
+          placeholder="AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz..."
         />
+        {provider === 'gemini' && !gemini && (
+          <p style={{
+            margin: '6px 0 0 0',
+            fontSize: '12px',
+            color: '#f59e0b',
+            fontStyle: 'italic'
+          }}>
+            💡 Paste your Gemini API key here (get it from the instructions above)
+          </p>
+        )}
+        {provider === 'gemini' && gemini && (
+          <p style={{
+            margin: '6px 0 0 0',
+            fontSize: '12px',
+            color: '#16a34a',
+            fontWeight: '500'
+          }}>
+            ✅ Gemini API key is configured! Don't forget to select "Gemini" as your AI Provider below.
+          </p>
+        )}
       </div>
       
       <div style={{marginBottom: '16px'}}>

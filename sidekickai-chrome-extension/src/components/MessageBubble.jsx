@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { formatMessage } from '../utils/formatMessage.jsx'
 import LoadingAnimation from './LoadingAnimation'
 
 /**
  * Message Bubble component for chat messages
+ * Memoized to prevent unnecessary re-renders
  */
-export default function MessageBubble({ message, theme, onResend, messageIndex }) {
+const MessageBubble = memo(function MessageBubble({ message, theme, onResend, messageIndex }) {
   const colors = theme?.colors || {}
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
@@ -131,5 +132,7 @@ export default function MessageBubble({ message, theme, onResend, messageIndex }
       )}
     </div>
   )
-}
+})
+
+export default MessageBubble
 

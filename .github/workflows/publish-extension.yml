@@ -6,10 +6,6 @@ on:
       - 'v*.*.*'  # Trigger on version tags like v1.0.0, v1.0.1, etc.
   workflow_dispatch:  # Allow manual triggering
     inputs:
-      version:
-        description: 'Version to publish (e.g., 1.0.0)'
-        required: true
-        type: string
       publish_chrome:
         description: 'Publish to Chrome Web Store'
         required: false
@@ -20,11 +16,19 @@ on:
         required: false
         type: boolean
         default: true
+    branches:
+      - main
+      - master
 
 jobs:
   build:
     name: Build Extension
     runs-on: ubuntu-latest
+    # Only allow publishing from main/master branch or version tags for security
+    # Note: Tags can be created from any branch, but should only be created from main
+    if: |
+      (github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,12 +44,34 @@ jobs:
         working-directory: sidekickai-chrome-extension
         run: npm ci
 
-      - name: Update version in manifest
+      - name: Get version from package.json or tag
+        id: get_version
         working-directory: sidekickai-chrome-extension
         run: |
-          VERSION="${{ github.event.inputs.version || github.ref_name }}"
-          # Remove 'v' prefix if present
-          VERSION=${VERSION#v}
+          if [ "${{ github.event_name }}" == "push" ] && echo "${{ github.ref }}" | grep -q "^refs/tags/v"; then
+            # For tag pushes, use the tag name (remove 'v' prefix)
+            VERSION="${{ github.ref_name }}"
+            VERSION=${VERSION#v}
+            echo "Using version from tag: $VERSION"
+          else
+            # For manual dispatch or other cases, read from package.json
+            VERSION=$(node -e "console.log(require('./package.json').version)")
+            echo "Using version from package.json: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Update version in package.json and manifest.json
+        working-directory: sidekickai-chrome-extension
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          # Update package.json version
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
           # Update manifest.json version
           node -e "
             const fs = require('fs');
@@ -53,7 +79,7 @@ jobs:
             manifest.version = '$VERSION';
             fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));
           "
-          echo "Updated version to: $VERSION"
+          echo "✅ Updated package.json and manifest.json to version: $VERSION"
 
       - name: Build extension
         working-directory: sidekickai-chrome-extension
@@ -204,7 +230,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [build, publish-chrome, publish-edge]
+    needs: [build]
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -213,11 +239,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get version
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-package
+          path: .
+
+      - name: Get version from package.json or tag
         id: version
+        working-directory: sidekickai-chrome-extension
         run: |
-          VERSION="${{ github.event.inputs.version || github.ref_name }}"
-          VERSION=${VERSION#v}
+          if [ "${{ github.event_name }}" == "push" ] && echo "${{ github.ref }}" | grep -q "^refs/tags/v"; then
+            # For tag pushes, use the tag name (remove 'v' prefix)
+            VERSION="${{ github.ref_name }}"
+            VERSION=${VERSION#v}
+            echo "Using version from tag: $VERSION"
+          else
+            # For manual dispatch, read from package.json
+            VERSION=$(node -e "console.log(require('./package.json').version)")
+            echo "Using version from package.json: $VERSION"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
@@ -229,19 +270,33 @@ jobs:
           body: |
             ## 🚀 SidekickAI v${{ steps.version.outputs.version }}
             
-            ### Changes
-            - Automated release via GitHub Actions
+            ### 📦 Installation
             
-            ### Downloads
+            **Option 1: Install from GitHub Release**
+            1. Download `sidekickai-dist.zip` from the assets below
+            2. Extract the ZIP file
+            3. Open Chrome/Edge and go to `chrome://extensions` or `edge://extensions`
+            4. Enable "Developer mode"
+            5. Click "Load unpacked" and select the extracted folder
+            
+            **Option 2: Install from Store**
             - [Chrome Web Store](https://chrome.google.com/webstore/detail/${{ secrets.CHROME_EXTENSION_ID }})
             - [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/${{ secrets.EDGE_PRODUCT_ID }})
             
-            ### Installation
-            1. Visit the Chrome Web Store or Edge Add-ons store
-            2. Click "Add to Chrome" or "Get"
-            3. Start using SidekickAI!
+            ### ✨ Features
+            - AI-powered chat assistant
+            - Screen content reading
+            - Screenshot analysis
+            - Multiple AI model support (OpenAI, Gemini, Hugging Face)
+            - Beautiful glassmorphism UI themes
+            
+            ### 📝 Notes
+            - This release was automatically created via GitHub Actions
+            - Extension package is attached below for manual installation
           files: |
             sidekickai-chrome-extension/sidekickai-dist.zip
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

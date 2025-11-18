@@ -1,14 +1,75 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 512 512"
+     width="512" height="512"
+     role="img" aria-label="MysticKode MK logo">
   <defs>
+
+    <!-- turquoise -> skyblue gradient used for strokes / accents -->
     <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#2dd4bf"/>
-      <stop offset="1" stop-color="#60a5fa"/>
+      <!-- <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#60a5fa"/> -->
+      <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a8ff;stop-opacity:1" />
     </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- subtle inner shadow for depth (optional) -->
+    <filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="64" fill="#071022"/>
-  <g transform="translate(64,64)">
-    <circle cx="96" cy="96" r="96" fill="url(#g)"/>
-    <path d="M60 80 L100 60 L100 132 L60 112 Z" fill="#07203a" opacity="0.95"/>
-    <text x="220" y="120" font-family="Inter, Roboto, Arial" font-size="48" fill="#e6eef6" font-weight="700">Sidekick<tspan fill="#2dd4bf">AI</tspan></text>
+
+  <!-- background -->
+  <rect width="100%" height="100%" fill="#071022"/>
+
+  <!-- rounded square border with gradient stroke -->
+  <rect x="40" y="40" width="432" height="432" rx="64" ry="64"
+        fill="none"
+        stroke="url(#g)"
+        stroke-width="20"
+        stroke-linejoin="round"
+        filter="url(#glow)"
+        opacity="0.95"
+        />
+
+  <!-- monogram group (paths use the same gradient stroke) -->
+  <g stroke="url(#g)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#softShadow)">
+    <!-- M shape: left stem, central vee, right stem -->
+    <!-- This path draws M with smooth joins -->
+    <path d="M132 372 L132 140 L204 260 L276 140 L276 372" />
+
+    <!-- K shape: vertical stem then two diagonal arms -->
+    <!-- Positioned to the right; mirrored-styled K -->
+    <path d="M316 140 L316 372" />
+    <path d="M316 260 L388 188" />
+    <path d="M316 260 L420 332" />
   </g>
+
+  <!-- Optional tiny accent stroke that follows border inside for a neon feel -->
+  <rect x="50" y="50" width="392" height="392" rx="56" ry="56"
+        fill="none"
+        stroke="rgba(255,255,255,0.02)"
+        stroke-width="6" 
+        />
+
+  
+
+  <!-- Make sure shapes remain crisp on small sizes -->
+  <style>
+    svg { shape-rendering: geometricPrecision; }
+  </style>
 </svg>
+
+
+
+

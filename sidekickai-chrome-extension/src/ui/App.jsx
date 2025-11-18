@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import ChatPane from './ChatPane'
 import Controls from './Controls'
 import { getTheme, DEFAULT_THEME } from '../utils/themes'
@@ -27,45 +27,58 @@ export default function App(){
   }, [settings.provider, settings.model])
   
   useEffect(()=> {
-    console.log('[SidekickAI] App component mounted, loading settings...')
-    try {
-      // Check if chrome.runtime is available
-      if (typeof chrome === 'undefined' || !chrome.runtime) {
-        console.error('[SidekickAI] chrome.runtime is not available!')
+    // Optimized: Load all data in parallel using Promise.all
+    const loadInitialData = async () => {
+      try {
+        // Check if chrome.runtime is available
+        if (typeof chrome === 'undefined' || !chrome.runtime) {
+          console.error('[SidekickAI] chrome.runtime is not available!')
+          setIsLoading(false)
+          return
+        }
+        
+        // Load settings and storage in parallel
+        const [settingsResult, storageResult] = await Promise.all([
+          new Promise((resolve) => {
+            chrome.runtime.sendMessage({type:'getSettings'}, (res)=> {
+              if (chrome.runtime.lastError) {
+                console.error('[SidekickAI] Error getting settings:', chrome.runtime.lastError.message)
+                resolve(null)
+              } else {
+                resolve(res || null)
+              }
+            })
+          }),
+          new Promise((resolve) => {
+            chrome.storage.local.get(['sidekickai_pinned', 'sidekickai_theme'], (result) => {
+              if (chrome.runtime.lastError) {
+                console.error('[SidekickAI] Error getting storage:', chrome.runtime.lastError.message)
+                resolve({})
+              } else {
+                resolve(result || {})
+              }
+            })
+          })
+        ])
+        
+        // Update state once after all data is loaded
+        if (settingsResult) {
+          setSettings(settingsResult)
+        }
+        if (storageResult.sidekickai_pinned !== undefined) {
+          setIsPinned(storageResult.sidekickai_pinned)
+        }
+        if (storageResult.sidekickai_theme) {
+          setTheme(storageResult.sidekickai_theme)
+        }
+      } catch (err) {
+        console.error('[SidekickAI] Error loading data:', err)
+      } finally {
         setIsLoading(false)
-        return
       }
-      
-      chrome.runtime.sendMessage({type:'getSettings'}, (res)=> { 
-        if (chrome.runtime.lastError) {
-          console.error('[SidekickAI] Error getting settings:', chrome.runtime.lastError.message)
-        } else if (res) {
-          console.log('[SidekickAI] Settings loaded:', res)
-          setSettings(res)
-        } else {
-          console.warn('[SidekickAI] No settings received, using defaults')
-        }
-        setIsLoading(false)
-      })
-      
-      // Load theme and pin state
-      chrome.storage.local.get(['sidekickai_pinned', 'sidekickai_theme'], (result) => {
-        if (chrome.runtime.lastError) {
-          console.error('[SidekickAI] Error getting storage:', chrome.runtime.lastError.message)
-        } else {
-          if (result.sidekickai_pinned !== undefined) {
-            setIsPinned(result.sidekickai_pinned)
-          }
-          if (result.sidekickai_theme) {
-            setTheme(result.sidekickai_theme)
-          }
-        }
-        setIsLoading(false)
-      })
-    } catch (err) {
-      console.error('[SidekickAI] Error getting settings:', err)
-      setIsLoading(false)
     }
+    
+    loadInitialData()
     
     // Listen for messages from content script
     const handleMessage = (event) => {
@@ -85,15 +98,16 @@ export default function App(){
     return () => window.removeEventListener('message', handleMessage)
   },[])
   
-  const handleTogglePin = () => {
+  const handleTogglePin = useCallback(() => {
     try {
       window.parent.postMessage({type:'togglePin'}, '*')
     } catch (err) {
       console.error('[SidekickAI] Error toggling pin:', err)
     }
-  }
+  }, [])
   
-  const currentTheme = getTheme(theme)
+  // Memoize theme to prevent unnecessary recalculations
+  const currentTheme = useMemo(() => getTheme(theme), [theme])
   const colors = currentTheme.colors
   
   // Show loading state
@@ -111,7 +125,7 @@ export default function App(){
           color: colors.text
         }}
       >
-        <div style={{color: colors.text}}>Loading SidekickAI...</div>
+        <div style={{color: colors.text}}>Loading MysticKode SidePanel AI...</div>
       </div>
     )
   }
@@ -140,14 +154,14 @@ export default function App(){
         <div style={{display:'flex', alignItems:'center'}}>
           <img 
             src='assets/logo.svg' 
-            alt='SidekickAI' 
+            alt='MysticKode SidePanel AI' 
             style={{height:36, marginRight:8}}
             onError={(e) => {
               console.warn('[SidekickAI] Logo failed to load');
               e.target.style.display = 'none';
             }}
           />
-          <h3 style={{margin:0, color: colors.text}}>SidekickAI</h3>
+          <h3 style={{margin:0, color: colors.text}}>MysticKode SidePanel AI</h3>
         </div>
         <div className='header-actions' style={{display:'flex', gap:'8px', alignItems:'center'}}>
           {/* <button 
@@ -248,7 +262,7 @@ export default function App(){
         </div>
       </div>
       <Controls theme={currentTheme} />
-      <ChatPane settings={settings} theme={currentTheme} />
+      <ChatPane settings={settings} theme={currentTheme} key={`chat-${settings.provider}-${settings.model}`} />
     </div>
   )
 }

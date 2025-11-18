@@ -37,37 +37,64 @@ export default function IconButton({ theme, icon, onClick, disabled, title, size
 }
 
 /**
- * Send Button - Up arrow in circle
+ * Send Button - Up arrow in circle with loading animation
  */
 export function SendButton({ theme, onClick, disabled, isLoading }) {
   const colors = theme?.colors || {}
   
+  // Loading spinner component
+  const LoadingSpinner = () => (
+    <div style={{
+      width: '20px',
+      height: '20px',
+      border: `2px solid ${colors.textSecondary || 'rgba(255,255,255,0.3)'}`,
+      borderTop: `2px solid ${colors.text || '#e6eef6'}`,
+      borderRadius: '50%',
+      animation: 'spin 0.8s linear infinite',
+      display: 'inline-block'
+    }} />
+  )
+  
   return (
-    <IconButton
-      theme={theme}
-      icon={
-        isLoading ? (
-          <span style={{ fontSize: '16px' }}>⏳</span>
-        ) : (
-          <UpArrowIcon size={20} color="currentColor" />
-        )
-      }
-      onClick={onClick}
-      disabled={disabled || isLoading}
-      title={isLoading ? 'Sending...' : 'Send message'}
-      size="large"
-      style={{
-        borderRadius: '50%',
-        background: disabled || isLoading
-          ? colors.panel || 'rgba(255,255,255,0.05)'
-          : colors.button || 'linear-gradient(135deg, rgba(45,212,191,0.4), rgba(96,165,250,0.4))',
-        border: `2px solid ${colors.accentBorder || 'rgba(45,212,191,0.5)'}`,
-        boxShadow: disabled || isLoading
-          ? 'none'
-          : `0 2px 8px ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
-        transition: 'all 0.2s'
-      }}
-    />
+    <>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+      <IconButton
+        theme={theme}
+        icon={
+          isLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <UpArrowIcon size={20} color="currentColor" />
+          )
+        }
+        onClick={onClick}
+        disabled={disabled || isLoading}
+        title={isLoading ? 'Sending...' : 'Send message'}
+        size="large"
+        style={{
+          borderRadius: '50%',
+          background: disabled || isLoading
+            ? colors.panel || 'rgba(255,255,255,0.05)'
+            : colors.button || 'linear-gradient(135deg, rgba(45,212,191,0.4), rgba(96,165,250,0.4))',
+          border: `2px solid ${colors.accentBorder || 'rgba(45,212,191,0.5)'}`,
+          boxShadow: disabled || isLoading
+            ? 'none'
+            : `0 2px 8px ${colors.accentBorder || 'rgba(45,212,191,0.3)'}`,
+          transition: 'all 0.2s',
+          animation: isLoading ? 'pulse 2s ease-in-out infinite' : 'none',
+          cursor: disabled || isLoading ? 'not-allowed' : 'pointer'
+        }}
+      />
+    </>
   )
 }
 

@@ -27,17 +27,24 @@ export function PinIcon({ size = 16, color = 'currentColor', filled = false }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
-      fill={filled ? color : 'none'}
-      stroke={color}
-      strokeWidth="2"
+      // viewBox="0 0 24 24"
+      viewBox="-0.075 -0.075 0.72 0.72"
+      // fill={filled ? color : '#000000'}
+      fill="#000000"
+      // stroke={color}
+      // strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      preserveAspectRatio="xMinYMin"
     >
-      <path d="M12 2v6"></path>
-      <path d="M9 4v4a3 3 0 0 0 6 0V4"></path>
-      <path d="M12 8v14"></path>
-      <path d="M8 8h8"></path>
+      {/* Location pin / map marker - commonly used for pinning in modern UIs */}
+      <path 
+        d="m0.379 0.34 -0.006 -0.031 0.135 -0.135 -0.086 -0.086 -0.135 0.135 -0.031 -0.006a0.151 0.151 0 0 0 -0.082 0.008l0.196 0.196a0.151 0.151 0 0 0 0.008 -0.082m-0.128 0.048L0.08 0.56a0.03 0.03 0 0 1 -0.043 -0.043l0.171 -0.171L0.08 0.217a0.211 0.211 0 0 1 0.187 -0.059l0.112 -0.112a0.061 0.061 0 0 1 0.086 0l0.086 0.086a0.061 0.061 0 0 1 0 0.086l-0.112 0.112a0.211 0.211 0 0 1 -0.059 0.187z"
+        // fill={filled ? color : '#000000'}
+        // fill="none"
+        // stroke={color}
+        // strokeWidth="2"
+      />
     </svg>
   )
 }

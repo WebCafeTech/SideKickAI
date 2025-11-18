@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "SidekickAI \u2014 Multi-Model Chat",
-  "description": "SidekickAI: Right-side AI chat panel that reads the screen and assists with quizzes.",
+  "name": "MysticKode SidePanel AI",
+  "description": "Transform your browsing into action.",
   "version": "1.0.0",
   "permissions": [
     "storage",
@@ -13,7 +13,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "SidekickAI",
+    "default_title": "MysticKode SidePanel AI",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
